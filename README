@@ -15,3 +15,11 @@ I consider this project to be finished, because it fulfills my requirements.
 Still, there is a huge potential for extension of this tool, so grab the code and make improvements
 if you like. I appreciate all pushed improvements..
 
+
+UPDATE:
+	In the folder kapichrome you find the chrome plugin which implements the most important features
+	(from my point of view) of the KapiSkript addon... I didn't want to create a special
+	repository for it, so I put it here...
+
+	With the chrome extension you can set production by time and select "everything" of an item type
+	at the warehouse for selling (which saves a lot of calculating and mouse clicks)

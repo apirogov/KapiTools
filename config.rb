@@ -1,5 +1,8 @@
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
+#!/usr/bin/env ruby
+#AutoKapi
+#Copyright (C) 2010 Anton Pirogov
+#Licensed under the GPL version 3 or later
+
 require 'base64'
 
 class Configuration
