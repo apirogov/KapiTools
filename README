@@ -1,0 +1,17 @@
+AutoKapi
+Copyright (C) 2010 Anton Pirogov
+Licensed under the GPL version 3 or later
+
+
+Usage:
+	run main.rb and follow the instructions...
+	use command 'help' to get a list of valid commands
+
+Requirement:
+	ruby gem 'watir-webdriver'
+
+
+I consider this project to be finished, because it fulfills my requirements.
+Still, there is a huge potential for extension of this tool, so grab the code and make improvements
+if you like. I appreciate all pushed improvements..
+
