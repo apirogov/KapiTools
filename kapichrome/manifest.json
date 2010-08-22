@@ -1,0 +1,15 @@
+{
+	"name": "KapiSkript Light für Google Chrome",
+	"version": "0.1",
+	"author": "Anton Pirogov",
+	"description": "KapiSkript-ähnliche Erweiterung für Chrome",
+	"permissions": [
+		"http://s6.kapilands.eu/"
+	],
+	"content_scripts": [
+	{
+		"matches": ["http://s6.kapilands.eu/*"],
+		"js": ["kapichrome.js"]
+	}
+	]
+}
