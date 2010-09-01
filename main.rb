@@ -11,10 +11,10 @@ require "config.rb"
 require "funcs.rb"
 include Funcs
 
-$DEBUG = true
+#$DEBUG = true              #watir-webdiver debug info stuff
 
-conf = Configuration.new
-$groups = conf.groups #global alias
+conf = Configuration.new    #try to load a config... or create a blank one
+$groups = conf.groups       #global alias (for group functions)
 
 #get nick and pass from config or if not existing, ask
 if conf.nickname==nil
@@ -49,7 +49,7 @@ else
   exit
 end
 
-#main loop
+#main loop - dynamically call methods depending on issued commands
 command = ""
 while true
   print ">> "

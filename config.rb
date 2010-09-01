@@ -8,6 +8,8 @@ require 'base64'
 class Configuration
   attr_accessor :nickname,:password,:groups
 
+  #save configuration to 2 files - nick+pwd into autokapi.config
+  # & all the groups as marshal to autokapi.groups
   def save
     f=File.open('autokapi.config','w')
     f.puts "nickname="+@nickname
@@ -19,6 +21,7 @@ class Configuration
   end
 
 
+  #try to load conf files... if fail - init empty stuff
   def initialize
     puts 'Loading configuration files...' if $DEBUG
 
@@ -41,12 +44,13 @@ class Configuration
         @groups = Marshal.load(f)
       end
     else
-      puts 'No groups file found!'
+      puts 'No groups file found!' if $DEBUG
       @groups = Hash.new
     end
   end
 end
 
+#object structure to hold information about groups
 class Group
   attr_accessor :ids, :type, :name
   def initialize
