@@ -1,17 +1,15 @@
 #!/usr/bin/env ruby
-#AutoKapi
+#AutoKapi - Kapiland Premium Features for free
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
 require "rubygems" if RUBY_VERSION < "1.9"
-require "watir-webdriver"
+require "mechanize"
 
 require "config.rb"
-
 require "funcs.rb"
 include Funcs
 
-#$DEBUG = true              #watir-webdiver debug info stuff
 
 conf = Configuration.new    #try to load a config... or create a blank one
 $groups = conf.groups       #global alias (for group functions)
@@ -32,14 +30,20 @@ end
 
 puts "Logging in..."
 
-$browser = Watir::Browser.new(:firefox)
-$browser.goto('http://s6.kapilands.eu')
-$browser.link(:href,'index.php?newacc=4').click
-$browser.text_field(:name, 'USR').value = nickname
-$browser.text_field(:name, 'pass').value = password
-$browser.button(:value, '    login    ').click
+#Init mechanize
+$agent = Mechanize.new
+$agent.user_agent = "Mechanize"
+$agent.user_agent_alias = "Linux Mozilla"
 
-if $browser.text.include? 'Logout'
+#fill out form, login
+start = $agent.get('http://s6.kapilands.eu')
+login_form = start.form_with(:action => 'serverwahl.php4')
+login_form['USR'] = nickname
+login_form['pass'] = password
+start = $agent.submit login_form
+
+#check login success
+if start.body.match('Logout')
   puts "Login successful!"
   #Login data verified -> save
   conf.nickname = nickname
@@ -48,6 +52,7 @@ else
   puts 'Login failed! Maybe you misspelled your login data?'
   exit
 end
+exit
 
 #main loop - dynamically call methods depending on issued commands
 command = ""
@@ -65,11 +70,6 @@ while true
 end
 
 #save config & logout
+puts "Logout..."
 conf.save
-$browser.links.each{|l|
-  if l.text.match(/.*Logout.*/)
-    l.click
-    break
-  end
-}
-$browser.close
+$agent.click(start.link_with(:text => /.*Logout.*/))

@@ -8,7 +8,7 @@ Usage:
 	use command 'help' to get a list of valid commands
 
 Requirement:
-	ruby gem 'watir-webdriver'
+	ruby gem 'mechanize'
 
 
 I consider this project to be finished, because it fulfills my requirements.
