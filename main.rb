@@ -52,7 +52,9 @@ else
   puts 'Login failed! Maybe you misspelled your login data?'
   exit
 end
-exit
+
+#starting point for all actions
+$city = $agent.click(start.link_with(:href => /stadtuebersicht/))
 
 #main loop - dynamically call methods depending on issued commands
 command = ""

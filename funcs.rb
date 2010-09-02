@@ -7,50 +7,58 @@
 
 #Contains helping functions invisible to the user
 module HelpFuncs
-  #get list of production facilities
-  def list_production()
-    #Go to town view -> main page
-    $browser.link(:id,'href_stadt').click
-    #create "new tab" with production facilities
-    $browser.link(:id,'href_prod').click
-    #get table with facilities
-    table=$browser.table(:xpath,'/html/body/table/tbody/tr[2]/td/div/div[4]/table').to_a
-    table.delete_if{|row| row[0].match(/:/) == nil }
-    puts table.map{|row| row.join("\t")}.join("\n")
+
+  #add spaces to achieve wished size of string
+  def strpad(str,num)
+    str+=' '*(num-str.length)
+    return str
   end
 
-  #get list of research facilities
-  def list_research()
-    #Go to town view -> main page
-    $browser.link(:id,'href_stadt').click
-    #create "new tab" with research facilities
-    $browser.link(:id,'href_forsch').click
-    #get table with facilities
-    table=$browser.table(:xpath,'/html/body/table/tbody/tr[2]/td/div/div[4]/table').to_a
-    table.delete_if{|row| row[0].match(/:/) == nil }
-    puts table.map{|row| row.join("\t")}.join("\n")
+  #get list of production or research facilities
+  def list_prod_or_res(type)
+    #create "new tab" with production/research facilities
+    if type == 'prod'
+      site = $agent.click($city.link_with(:href=>/page=gebs/))
+    elsif type == 'res'
+      site = $agent.click($city.link_with(:href=>/page=forschs/))
+    else
+      return false
+    end
+
+    #get table with facilities -> extract and parse rows
+    rows=site.search('/html/body/table/tr[2]/td/div/div[4]/table/tr')
+
+    #create readable text lines for each row
+    textrows = []
+    rows.each{|x|
+      str = ''
+      x.element_children.each{|y| str += y.text + ' '}
+      textrows << str
+    }
+
+    #filter junk out and output
+    textrows.delete_if{|row| row.split(' ')[0].match(/:/) == nil }
+    puts textrows
   end
 
   #get list of warehouse items
   def list_warehouse()
-    #Go to town view -> main page
-    $browser.link(:id,'href_stadt').click
-    #create "new tab" with warehose
-    $browser.link(:id,'href_lager').click
+    #create "new tab" with research facilities
+    warehouse = $agent.click($city.link_with(:href=>/page=lager/))
 
     #get table cells and recreate table as text
-    stuff = $browser.table(:id,'TABLE_MY_PRODUCTS_IN_STOCK').to_a.flatten
+    tablerows = warehouse.search('//*[@id="TABLE_MY_PRODUCTS_IN_STOCK"]/tr')
 
-    table = ""
-    stuff.shift(5)
-    stuff.each_with_index{|cell,index|
-      if (index+1)%5 != 0
-        table += cell+"\t\t"
-      else
-        table += "\n"
+    rowstrings=[]
+    tablerows.each{|x|
+      if x.to_s.match(/>\d+/)!=nil
+        str=''
+        x.element_children.each{|y| str += strpad(y.text,20) }
+        rowstrings << str.strip
       end
     }
-    puts table
+
+    puts rowstrings
   end
 end
 
@@ -62,8 +70,16 @@ module Funcs
 
   #get info like bar/capital/level etc
   def info(commands)
-    infos=$browser.table(:xpath,'/html/body/table/tbody/tr/td/table/tbody/tr/td[2]/table')
-    infos.to_a.flatten.each_with_index{|t,i| puts t.chomp.strip if i!=1}
+    #extract info rows
+    infos = $city.search('/html/body/table/tr/td/table/tr/td[2]/table/tr')
+    lines=[]
+    infos.each{|y| lines << y.text.strip}#
+
+    #remove junk and output
+    lines[0] = lines[0][0..lines[0].index("\n")].strip
+    lines[3] = lines[3][0..lines[3].index("\n")].strip
+    lines[-1] = lines[-1][0...lines[-1].index("(")].strip
+    puts lines
   end
 
   #list production/research/warehouse
@@ -75,8 +91,8 @@ module Funcs
       return
     end
 
-    list_production if what=='production'
-    list_research if what=='research'
+    list_prod_or_res('prod') if what=='production'
+    list_prod_or_res('res') if what=='research'
     list_warehouse if what=='warehouse'
   end
 
