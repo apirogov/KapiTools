@@ -3,15 +3,31 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-#TODO: a bit refactoring, adding support for type checking for groups, then something with ressource calculation?
+#TODO:  adding support for type checking for groups
+#       maybe then something with ressource calculation?
+#       try multi threading - how much speedup?
 
 #Contains helping functions invisible to the user
 module HelpFuncs
+
+  PRODTAB_XPATH = '/html/body/table/tr[2]/td/div/div[4]/table'    #used quite often
 
   #add spaces to achieve wished size of string
   def strpad(str,num)
     str+=' '*(num-str.length)
     return str
+  end
+
+  #Get the text of a row with spaces in between the td's
+  def tr_text(row)
+      str = ''
+      row.element_children.each{|td| str += td.text.strip + ' '}
+      return str
+  end
+
+  #because normal strip doesnt work anymore oO
+  def my_strip(str)
+    str.gsub(/\W+$/,'').gsub(/^\W+/,'')
   end
 
   #get list of production or research facilities
@@ -26,15 +42,11 @@ module HelpFuncs
     end
 
     #get table with facilities -> extract and parse rows
-    rows=site.search('/html/body/table/tr[2]/td/div/div[4]/table/tr')
+    rows=site.search(PRODTAB_XPATH+'/tr')
 
     #create readable text lines for each row
     textrows = []
-    rows.each{|x|
-      str = ''
-      x.element_children.each{|y| str += y.text + ' '}
-      textrows << str
-    }
+    rows.each{|row| textrows << tr_text(row) }
 
     #filter junk out and output
     textrows.delete_if{|row| row.split(' ')[0].match(/:/) == nil }
@@ -66,19 +78,19 @@ end
 module Funcs
   include HelpFuncs
 
-  PRODTAB_XPATH = '/html/body/table/tbody/tr[2]/td/div/div[4]/table'    #used quite often
 
   #get info like bar/capital/level etc
   def info(commands)
     #extract info rows
     infos = $city.search('/html/body/table/tr/td/table/tr/td[2]/table/tr')
     lines=[]
-    infos.each{|y| lines << y.text.strip}#
+    infos.each{|y| lines << y.text.strip}
 
     #remove junk and output
-    lines[0] = lines[0][0..lines[0].index("\n")].strip
-    lines[3] = lines[3][0..lines[3].index("\n")].strip
-    lines[-1] = lines[-1][0...lines[-1].index("(")].strip
+    lines[0] = lines[0][0..lines[0].index("\n")]
+    lines[3] = lines[3][0..lines[3].index("\n")]
+    lines[-1] = lines[-1][0...lines[-1].index("(")]
+    lines.map!{|l| my_strip(l) }
     puts lines
   end
 
@@ -98,35 +110,27 @@ module Funcs
 
   #create facility_id => direct link hash
   def create_cache(commands)
-    $prodlinkcache = Hash.new
+    $prodlinkcache = Hash.new   #init empty cache
+    site = $agent.click($city.link_with(:href=>/page=gebs/))  #open page
+    rows=site.search(PRODTAB_XPATH+'/tr') #get table rows
 
-    #Go to town view -> main page
-    $browser.link(:id,'href_stadt').click
-    #go to production
-    $browser.link(:id,'href_prod').click
-
-    $browser.table(:xpath,PRODTAB_XPATH).rows.to_a.each_with_index{|factory,i|
-      rowtext = $browser.table(:xpath,PRODTAB_XPATH).rows[i].text
+    #filter out the facility id's and the links
+    rows.each{|row|
+      rowtext = tr_text(row)  #get text string from row
       fac = rowtext.split(' ')[0]   #get facilityId of row
 
-      if fac.split(':').length == 2  #a facility row
-        failed = false
-        begin
-          link = $browser.table(:xpath,PRODTAB_XPATH).rows[i].links[0].html.match(/main.php.*"/).to_s #get the fac. url
-          #create a real url
-          link = 'http://s6.kapilands.eu/'+link
-          link = link.gsub("&amp;","&")[0...-1] #make real & and drop the final "
-        rescue
-          failed = true
-        end
-
-        #no error getting link -> add to hash
-        $prodlinkcache[fac] = link if !failed
+      if fac.split(':').length == 2  #a real facility row?
+          link = row.element_children[-1].first_element_child['href'] #get the fac. url
+          #no error getting link -> add url to hash
+          if link != nil
+            #create a real url
+            link = 'http://s6.kapilands.eu/'+link
+            $prodlinkcache[fac] = link
+          end
       end
     }
-
     #output:
-    #$prodlinkcache.each{|key,val| puts key + "=>"+val }
+    $prodlinkcache.each{|key,val| puts key + "=>"+val } if $DEBUG
     puts "Temporary factory cache created!"
   end
 
@@ -146,201 +150,210 @@ module Funcs
     end
 
 
-    link = nil
-    #rowtext nil && link !nil or vice versa, but not both
-
-    #if no prodlinkcache built or facility id not in there -> go to page and check
+    link = nil    #url of the facility
+    #if no prodlinkcache built or facility id not in there -> go to page and get it
     if $prodlinkcache == nil || $prodlinkcache[facilityid] == nil
-      #Go to town view -> main page
-      $browser.link(:id,'href_stadt').click
-      #go to production
-      $browser.link(:id,'href_prod').click
+      site = $agent.click($city.link_with(:href=>/page=gebs/))  #open page
+      rows=site.search(PRODTAB_XPATH+'/tr') #get table rows
 
       rowtext=nil
-      index=0
-      #get row text and index of accodring building id
-      $browser.table(:xpath,PRODTAB_XPATH).rows.to_a.each_with_index{|factory,i|
-        if factory.text.match(/.*#{facilityid}.*/)
-          rowtext = $browser.table(:xpath,PRODTAB_XPATH).rows[i].text
-          index = i
-          break
+      rows.each{|row|                #get rowtext of accodring building id
+        rowtext = tr_text(row)        #get text string from row
+        fac = rowtext.split(' ')[0]   #get facilityId of row
+        if fac == facilityid         #the one we look for?
+          link = row.element_children[-1].first_element_child['href'] #get the fac. url
+          if link != nil             #no error getting link -> add url to hash
+            link = 'http://s6.kapilands.eu/'+link         #create a real url
+          end
+          break                       #get out to not get overwritten
         end
-      }
-    else
+       }
+    else  #must be cached -> get from cache
       link = $prodlinkcache[facilityid]
     end
 
     #abort production? try...
     if product == 'abort'
       #not cached link -> do check
-      if rowtext != nil && rowtext.match(/.*bereit.*/)
+      if rowtext != nil && rowtext.match(/bereit/)
         puts 'Nothing to abort!'
         return false
       end
 
-      #open page either from cachelink or from site
-      if link != nil
-        $browser.goto(link)
-      else
-        $browser.table(:xpath,PRODTAB_XPATH).rows[index].links[0].click
-      end
+      #open page
+      prodsite = $agent.get(link)
 
-      #exception handling because of cached link -> cant see "bereit"...
-      begin
-        $browser.link(:id,'A_PRODUKTION_ABBRECHEN').click
-      rescue
+      #look for abort link.. and check that there's really something to do
+      cancel = prodsite.link_with(:text=>/abbrechen/)
+      control = prodsite.search('//*[@id="SPAN_PRODUKTION_PRODUZIERT_FERTIGIN"]').text.match(/Fertig in/)
+
+      if cancel != nil && control != nil  #link found -> abort
+        $agent.click(cancel)
+        puts "Production in #{facilityid} aborted!"
+        return true
+      else              #link not found
         puts "Nothing to abort!"
         return false
       end
-
-      puts "Production in #{facilityid} aborted!"
-      return true
     end
 
-    #not cached link -> do check
-    if rowtext != nil && rowtext.match(/.*bereit.*/)==nil
+    #check that is ready to use
+    if rowtext != nil && rowtext.match(/bereit/)==nil
         puts "Abort current production first!"
         return false
     end
 
-    #load production page either from cachelink or from site
-    if link!=nil
-      $browser.goto(link)
-    else
-      $browser.table(:xpath,PRODTAB_XPATH).rows[index].links[0].click
-    end
+    #load facility page
+    prodsite = $agent.get(link)
 
-    #exception handling because of cached link -> cant see "bereit"...
-    if link==nil
-      begin
-        test = $browser.link(:id,'A_PRODUKTION_ABBRECHEN').html
-       #should raise exception here
+    #check that really nothing is running here that must be canceled
+    cancel = prodsite.link_with(:text=>/abbrechen/)
+    control = prodsite.search('//*[@id="SPAN_PRODUKTION_PRODUZIERT_FERTIGIN"]').text.match(/Fertig in/)
+    if cancel!=nil && control != nil  #OMG its producing!
        puts "Abort current production first!"
        return false
-     rescue
-       #fine... not found -> can produce
-      end
     end
 
     #create product name -> link index hash and index -> intern index array
-    proditems = $browser.table(:xpath,'/html/body/table/tbody/tr[2]/td/div/table').rows[0]
+    proditems = prodsite.search('/html/body/table/tr[2]/td/div/table/tr/td')
+    prodinfos = prodsite.search('/html/body/table/tr[2]/td/div/table/tr/script')
     indexhash = Hash.new
     itoreali = Array.new
-    proditems.cells.each_with_index{|c,i|
-      indexhash[c.links[0].images[0].src.split('/')[-1].split('.')[0].downcase.to_sym] = i
+    i=0
+    proditems.each {|elem|
+      indexhash[elem.first_element_child.first_element_child['src'].split('/')[-1].split('.')[0].downcase.to_sym] = i
+      i+=1
     }
-    proditems.cells.each_with_index{|c,i|
-      itoreali.push c.links[0].html.split(' ')[3].split(')')[0].to_i
+    proditems.each {|elem|
+      itoreali.push elem.first_element_child['onclick'].split(' ')[-1].split(')')[0].to_i
     }
 
-    if indexhash[product.downcase.to_sym] == nil
+    index = indexhash[product.downcase.to_sym]    #save index of chosen product
+
+    if index == nil
       puts "You can't produce #{product} here!" #invalid prod for facility -> fail
       return false
     end
 
-    #start production
-    proditems.cells[indexhash[product.downcase.to_sym]].links[0].click
-    form = $browser.table(:id,'TABLE_PRODUKT_PRODUZIEREN_MYPRODUCTTABLE').row(:id,'TABLE_PRODUKT_PRODUZIEREN_MYPRODUCTTABLE_TRID_'+itoreali[indexhash[product.downcase.to_sym]].to_s)
+    # -- start production --
 
+    #get form element for textfields + button
+    form = prodsite.forms[1]
     #calculate absolute amount from time
     if way=='time'
-      perhour = $browser.cell(:xpath,"//span[@id='SPAN_PRODUKT_PRODUZIEREN_PLATZHALTER']/table/tbody/tr/td/table/tbody/tr[2]/td").text.split("\n")[-1].split(' ')[-3].to_f
-      number = (perhour*number.split(':')[0].to_i + perhour/60*number.split(':')[1].to_i).round
+      #get the stuff out from the script segment (mechanize cant eval js -.-)
+      datastring = prodinfos[index].inner_text.split('</div>')[1]
+      perhour = datastring.split('pro Std.')[0].split(' ')[-1].to_f
+      #calculate amount using number per hour
+      number = (perhour*number.split(':')[0].to_i + perhour/60*number.split(':')[1].to_i).round.to_s
     end
 
-    #set amount
-    form.cells[0].text_fields[0].value = number
+    #set amount in the right textbox
+    form.fields[index].value = number
     #click button
-    $browser.button(:value, ' jetzt produzieren ').click
+    started = form.submit
 
-    #check for "not enough stuff" error
-    begin
-      if $browser.cell(:xpath,"//div[@id='DIV_Spielfeld_Unterseiten_Overlay_ProduktBuy']/table/tbody/tr/td[@class='white2']/table/tbody/tr[2]/td[@class='white']").text.match('brauchst du') != nil
-        puts "Not enough ressources!"
-        return false
-      end
-    rescue
-      #not found? gooood!
+    #check whether the starting was successful
+    if started.body.match('zu produzieren brauchst du') != nil
+      puts "Not enough ressources!"
+      return false
     end
 
     puts "Production of #{number} #{product} in #{facilityid} started!"
     return true
   end
 
-#TODO: WHAT FRIGGIN MORON DID WRITE THIS FUNC?? oh, dammit, I did... RE-FUCKING-FACTOR!!! and COMMENT
   def group(commands)
     if commands[0]==nil
       puts "Usage: group create/delete <name> <type>\nor: group <name> abort\nor: group <name> add/remove <id>\nor: group <name> prod <product> amount/time number/HH:MM"
-      return
+      return false
     end
 
+    #get subcommand
     cmd = commands[0]
 
+    #create a new group
     if cmd=='create'
       if commands[1]==nil
         puts "Usage: group create <name> <type>"
-        return
+        return false
       end
+
       grp = Group.new
       grp.name = commands[1]
       grp.type = commands[2]
+
       if $groups[grp.name.to_sym]==nil
         $groups[grp.name.to_sym] = grp
         puts "Group #{commands[1]} of type #{commands[2]} created!"
       else
         puts "Group #{commands[1]} already exists!"
       end
+
+    #delete existing group
     elsif cmd=='delete'
       if commands[1]==nil
         puts "Usage: group delete <name>"
-        return
+        return false
       end
+
       $groups.delete(commands[1].to_sym)
       puts "Group #{commands[1]} deleted!"
+
+    #list the groups which currently exist
     elsif cmd=='list'
       $groups.keys.each{|key| puts key }
+
     else
+      #its not list and not abort and has no extra options? show usage info
       if commands[2]==nil && commands[1]!='list' && commands[1]!='abort'
           help([])
-          return
+          return false
       end
+
+      #get further subcommands
       name = cmd
       cmd = commands[1]
+
+      #check that the group exists
+      if $groups[name.to_sym]==nil
+        puts "Group does not exist!"
+        return false
+      end
+
+      #add a facility to a group (double entries automatically removed) - can process a list of ids
       if cmd=='add' #todo: add type check
         2.upto(commands.length-1) do |i|
           $groups[name.to_sym].add(commands[i])
           puts "#{commands[i]} added to #{name}!"
         end
+
+      #remove a facility from a group - can process a list of ids
       elsif cmd=='remove'
         2.upto(commands.length-1) do |i|
           $groups[name.to_sym].remove(commands[i])
           puts "#{commands[i]} removed from #{name}!"
         end
+
+      #list the facilities of a group
       elsif cmd=='list'
-        if $groups[name.to_sym]!=nil
-          $groups[name.to_sym].ids.each{|id| puts id}
-        else
-          puts "Group does not exist!"
-        end
+        $groups[name.to_sym].ids.each{|id| puts id}
+
+      #abort the production of a whole group
       elsif cmd=='abort'
-        if $groups[name.to_sym]!=nil
-          $groups[name.to_sym].ids.each{|id|
-            puts "Aborting #{id}..."
-            prod([id,'abort'])
-          }
-        else
-          puts "Group does not exist!"
-        end
+        $groups[name.to_sym].ids.each{|id|
+          puts "Aborting #{id}..."
+          prod([id,'abort'])
+        }
+
+      #start a production task in all facilites of group
       elsif cmd=='prod'
-        if $groups[name.to_sym]!=nil
-          $groups[name.to_sym].ids.each{|id|
-           puts "Starting production in #{id}..."
-           prod([id,commands[2],commands[3],commands[4]])
-          }
-        else
-          puts "Group does not exist!"
-        end
+        $groups[name.to_sym].ids.each{|id|
+          puts "Starting production in #{id}..."
+          prod([id,commands[2],commands[3],commands[4]])
+        }
       end
+
     end
   end
 
@@ -357,7 +370,7 @@ module Funcs
     help += "group <name> abort\n"
     help += "group <name> prod <product> amount|time number|HH:MM\n"
     help += "prod <id> abort\nprod <id> <product> amount|time number|HH:MM\n"
-    help += "create_cache (run once after login, speeds up group productions 2-3x)\n"
+    help += "create_cache (run once after login, may speed up group prod a little)\n"
     puts help
   end
 end

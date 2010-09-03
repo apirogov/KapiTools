@@ -3,11 +3,11 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-require "rubygems" if RUBY_VERSION < "1.9"
-require "mechanize"
+require 'rubygems'  if RUBY_VERSION < "1.9"
+require 'mechanize'
 
-require "config.rb"
-require "funcs.rb"
+require './config.rb'
+require './funcs.rb'
 include Funcs
 
 
