@@ -4,6 +4,7 @@
 #Licensed under the GPL version 3 or later
 
 #TODO: maybe then something with ressource calculation?
+#TODO: Make id and type caseindependent
 
 #Contains helping functions invisible to the user
 module HelpFuncs
@@ -46,8 +47,8 @@ module HelpFuncs
             #create a real url
             link = 'http://s6.kapilands.eu/'+link
             #get type
-            type = rowtext.split(' ')[1]
-            $facilitycache[fac] = {:link => link, :type => type}
+            type = rowtext.split(' ')[1].downcase
+            $facilitycache[fac.downcase] = {:link => link, :type => type}
           end
       end
     }
@@ -140,7 +141,7 @@ module Funcs
   #prod Kongo:39247345 Holz amount/time 34568345/12:34
   def prod(commands)
     #get arguments
-    facilityid = commands[0].to_s
+    facilityid = commands[0].to_s.downcase
     product = commands[1].to_s
     way = commands[2].to_s
     number = commands[3].to_s
@@ -161,7 +162,7 @@ module Funcs
       rows.each{|row|                #get rowtext of accodring building id
         rowtext = tr_text(row)        #get text string from row
         fac = rowtext.split(' ')[0]   #get facilityId of row
-        if fac == facilityid         #the one we look for?
+        if fac.downcase == facilityid         #the one we look for?
           link = row.element_children[-1].first_element_child['href'] #get the fac. url
           if link != nil             #no error getting link -> add url to hash
             link = 'http://s6.kapilands.eu/'+link         #create a real url
@@ -171,6 +172,12 @@ module Funcs
        }
     else  #must be cached -> get from cache
       link = $facilitycache[facilityid][:link]
+    end
+
+    #still no link? facility doesnt exist!
+    if link==nil
+      puts facilityid+' does not exist!'
+      return false
     end
 
     #abort production? try...
@@ -281,8 +288,8 @@ module Funcs
       end
 
       grp = Group.new
-      grp.name = commands[1]
-      grp.type = commands[2]
+      grp.name = commands[1].downcase
+      grp.type = commands[2].downcase
 
       if $groups[grp.name.to_sym]==nil
         $groups[grp.name.to_sym] = grp
@@ -325,12 +332,12 @@ module Funcs
       #add a facility to a group (double entries automatically removed) - can process a list of ids
       if cmd=='add' #todo: add type check
         2.upto(commands.length-1) do |i|
-          if $facilitycache[commands[i]] != nil #facility does really exist
-            if $facilitycache[commands[i]][:type] == $groups[name.to_sym].type  #type matching?
-              $groups[name.to_sym].add(commands[i])
+          if $facilitycache[commands[i].downcase] != nil #facility does really exist
+            if $facilitycache[commands[i].downcase][:type].downcase == $groups[name.to_sym].type.downcase  #type matching?
+              $groups[name.to_sym].add(commands[i].downcase)
               puts "#{commands[i]} added to #{name}!"
             else
-              puts "#{$facilitycache[commands[i]][:type]+' '+commands[i]} can not be added to the #{$groups[name.to_sym].type} group #{name}!"
+              puts "#{$facilitycache[commands[i].downcase][:type]+' '+commands[i]} can not be added to the #{$groups[name.to_sym].type} group #{name}!"
             end
           else
             puts "#{commands[i]} does not exist!"
@@ -340,11 +347,11 @@ module Funcs
       #remove a facility from a group - can process a list of ids
       elsif cmd=='remove'
         2.upto(commands.length-1) do |i|
-          if $groups[name.to_sym].ids.index(commands[i]) != nil #its in the group
-            $groups[name.to_sym].remove(commands[i])
-            puts "#{commands[i]} removed from #{name}!"
+          if $groups[name.to_sym].ids.index(commands[i].downcase) != nil #its in the group
+            $groups[name.to_sym].remove(commands[i].downcase)
+            puts "#{commands[i].downcase} removed from #{name}!"
           else  #not in group
-            puts "#{commands[i]} is not in #{name}!"
+            puts "#{commands[i].downcase} is not in #{name}!"
           end
         end
 
