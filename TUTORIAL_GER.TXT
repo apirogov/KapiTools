@@ -1,0 +1,189 @@
+====     AutoKapi     ====
+====Deutsches Tutorial====
+
+================
+Voraussetzungen:
+	Grundlegende Fähigkeiten im Umgang mit dem Computer (es wird nicht jeder Klick beschrieben)
+	Grundlegende Englischkenntnisse
+
+===========================
+Installation unter Windows:
+	AutoKapi benötigt die Laufzeitumgebung der Programmiersprache Ruby. Diese erhälst du unter
+	folgendem Link:
+		http://files.rubyforge.vm.bytemark.co.uk/rubyinstaller/rubyinstaller-1.9.2-p0.exe
+
+	Installiere	Ruby, wobei du (WICHTIG!) die Haken bei:
+	  [x] Add Ruby executables to your PATH
+	  [x] Associate .rb and .rbw files with this Ruby installation
+	setzt!
+
+	Nun öffne cmd.exe bzw die "Eingabeaufforderung" (z.B. über das Startmenü oder über Start->Ausführen)
+
+	Gib ein:
+		gem install mechanize
+	
+	Es kann eine Weile dauern, bis es fertig ist... schließ das Fenster NICHT bis du wieder
+	soetwas wie:
+		C:\Dokumente und Einstellungen\DeinUser>
+	sehen kannst.
+
+	Nun ist alles für den Einsatz von AutoKapi bereit!
+
+============
+Erster Start:
+	Gehe in den AutoKapi Ordner und Doppelklicke auf die Datei main.rb
+
+	Es erscheint ein Konsolenfenster - über dieses läuft die ganze Interaktion ab.
+	Das gesamte Programm ist auf Englisch, damit user aller Sprachversionen
+	es für sich anpassen können (Standardmäßig eingestellt auf den deutschen Server 6)
+
+	Du wirst nach deinem Nickname und Password gefragt - gib deine Kapiland Logindaten ein!
+	
+	Wenn du dich vertippt hast bzw. ungültige Daten eingibst, schließt sich das Fenster nachdem
+	es dir sagt dass du vermutlich einen Fehler gemacht hast.
+
+	Wenn die Daten stimmen, kommt:
+		Logging in...
+		Login successful!
+		>>
+
+
+	Dieses >> zeigt dir an, dass du nun AutoKapi Befehle ausführen kannst.
+	Du kannst sofort ausprobieren, benutze den Befehl:
+		logout
+	und drück Enter!
+
+	AutoKapi hat sich nun geschlossen und deine Login Daten gespeichert, 
+	sodass du beim nächsten Start nicht mehr gefragt wirst.
+
+	WICHTIG: Verlasse AutoKapi IMMER über logout!
+	Sonst werden deine Änderungen an deinen Gruppen nicht gespeichert!
+
+=================
+Einfache Befehle:
+	Starte AutoKapi erneut. Nun wurdest du schon automatisch eingeloggt und siehst das >>
+
+	Mit dem Befehl
+		help
+	wird dir eine komplette Referenz aller Befehle angezeigt, falls du vergessen hast wie man etwas macht.
+	Außerdem wird dir angezeigt wie ein Befehl benutzt wird, wenn du einen Befehl unvollständig eingegeben hast.
+
+	Der Befehl
+		info
+	gibt dir die Daten aus, die oben stehen - Firmenname, Fest-/Barkapital, Level, etc.
+
+	Du kannst dir jederzeit die Liste deiner Gebäude, Forschungsanlagen und Waren im Lager anzeigen lassen mit:
+	Für Gebäude:	list production
+	Forschung:		list research
+	Lager:			list warehouse
+	
+	Hier siehst du dann genau das, was du auch auf den entsprechenden Seiten im Browser sehen würdest.
+	Dadurch kannst du dir eventuell das Öffnen von Kapiland in deinem Browser sparen.
+
+=====================
+Praktische Anwendung:
+
+	Zuerst die Nomenklatur:
+		Eine <id> ist das, was beim Gebäude in der Liste in der Spalte ganz links zu sehen ist
+		Zum Beispiel: Kongo:123456, SaudiArabien:133742
+		
+		Ein <type> ist der Gebäudetyp, also das in der zweiten Spalte von links
+		Zum Beispiel: Plantage, Kraftwerk, Fabrik
+
+		Ein <product> ist, wie der Name schon sagt, ein Produkt, und zwar im Singular
+		Zum Beispiel: Stuhl, Wasser, Bett
+
+	Gruppenverwaltung:
+
+		Nehmen wir an, wir haben 3 Kraftwerke, die wir als eine Einheit zusammenfassen möchten.
+
+		Erstellen wir also eine Gruppe:
+			group create kws Kraftwerk
+
+		Was ist geschehen? Wir haben eine neue Gruppe mit dem Namen kws angelegt,
+		die nur Kraftwerke aufnehmen kann. Das heißt, versuchst du in diese Gruppe
+		eine Fabrik hinzuzufügen (was keinen Sinn macht), lässt AutoKapi das nicht zu.
+
+		Nun fügen wir die Kraftwerke zu der Gruppe hinzu. Dazu brauchst du die IDs der Kraftwerke.
+		Nehmen wir an, die Kraftwerke sind: Kongo:123456, Kongo:234567 und Kongo:345678 -
+		nun gibt es die Möglichkeit, alle mit einem Befehl oder alle einzeln hinzuzufügen:
+			group kws add Kongo:123456 Kongo:234567 Kongo:345678
+		oder:
+			group kws add Kongo:123456
+			group kws add Kongo:234567
+			group kws add Kongo:345678
+
+		Super - wir haben eine Gruppe erstellt und können nun Aufträge an alle Kraftwerke
+		gleichzeitig erteilen. Um zu sehen, welche Kraftwerke in der Gruppe kws sind, gib ein:
+			group kws list
+		Du erhälst alle IDs in der Gruppe als Ausgabe.
+
+		Wenn du später viele Gruppen hast, kannst du dir auch alle Gruppen samt ihrem Typ anzeigen lassen:
+			group list
+
+		Falls du es dir irgendwann überlegst, bestimmte Gebäude wieder aus einer Gruppe zu entfernen,
+		weil du sie zB. für etwas anderes einsetzen möchtest oder verkauft hast:
+			group kws remove <id>
+		wobei statt <id> die ID des Gebäudes stehen muss.
+
+		Und falls eine ganze Gruppe einmal nutzlos geworden ist, kannst du sie eiskalt löschen, mit:
+			group delete <name>
+		Wobei <name> für den Gruppennamen, zB kws steht.
+
+		WICHTIG: Ich erwähne es nochmal - verlasse AutoKapi IMMER mit logout!
+				Sonst werden alle Änderungen an den Gruppen verworfen!
+
+	Der Spaß beginnt - Einzelproduktion und Gruppenproduktion:
+		
+		Zuerst der Befehl zur Einzelproduktion:
+			Dieser Befehl ist interessant, wenn man ein Gebäude, welches zu keiner Gruppe gehört,
+			da es eine Sonderaufgabe hat oder einfach das Einzige seiner Art ist, verwalten möchte.
+			
+			Zuerst das Einfache: Abbruch einer Produktion:
+				prod <id> abort
+			Dadurch wird die Produktion im Gebäude mit der angegebenen ID abgebrochen.
+			Falls nichts produziert wird, passiert natürlich auch nichts (nur eine kleine Fehlermeldung)
+
+			Starten eines Auftrages:
+				Wir wollen das Kraftwerk Mauretanien:987654 48 Stunden lang Strom produzieren lassen:
+					prod Mauretanien:987654 strom time 48
+				Wir wollen die Fabrik Deutschland:666777 1337 Einheiten Stahl produzieren lassen:
+					prod Deutschland:666777 stahl amount 1337
+
+				Also sehen wir: Ist eine Produktion nach Zeit erwünscht, muss am ende
+					time hh[:mm] stehen, also eine einfache zahl gilt als Stunden,
+					aber eine Angabe in der Form wie 12:34 gilt als 12 Stunden 34 Minuten.
+					AutoKapi rechnet die absolute Anzahl, die in der Zeit zu produzieren ist selbst aus.
+
+				Es gibt 3 häufigste Gründe, warum das Starten der Produktion misslingt:
+					- Es läuft bereits ein Auftrag
+					- Das Produkt, dass man angibt, ist nicht in diesem Gebäude zu produzieren
+					- es mangelt an Rohstoffen
+				Man wird jeweils auf diese Umstände hingewiesen.
+
+
+		Auf dem prod Befehl baut die Gruppenproduktion auf, der eigentliche interessante Teil:
+			
+			Möchten wir unsere Gruppe kws abbrechen lassen:
+				group kws abort
+
+			Möchten wir unsere Gruppe kws hingegen starten:
+				group kws prod strom time 72
+			Lässt die Kraftwerke 72 Stunden lang Strom erzeugen...
+		
+			Man erkennt: Der Befehl funktioniert analog zu dem Einzelbefehl, nur dass wir
+			vor prod noch group <gruppenname> vorsetzen und nach prod keine id mehr angeben.
+				prod <id> <produkt> <art> <zeit/absolutmenge> wird zu:
+				group <name> prod <produkt> <art> <zeit/absolutmenge>
+
+			Ich hoffe dieser Zusammenhang ist nachvollziehbar.
+
+			Dieser Befehl ist auch der eigentliche Grund für die Existenz und der Kern von AutoKapi.
+
+=========
+Fazit:
+
+	Mit AutoKapi kann man eine Menge Zeit sparen, falls man dutzende gleiche Gebäude besitzt.
+	Dabei versucht AutoKapi auch Bedienungsfehler abzufangen, damit man nicht viel falsch machen kann.
+	Ich hoffe durch dieses Tutorial ist die AutoKapi-Bedienung klar geworden und wünsche viel Spaß!
+
