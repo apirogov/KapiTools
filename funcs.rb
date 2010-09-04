@@ -3,9 +3,7 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-#TODO:  adding support for type checking for groups
-#       maybe then something with ressource calculation?
-#       try multi threading - how much speedup?
+#TODO: maybe then something with ressource calculation?
 
 #Contains helping functions invisible to the user
 module HelpFuncs
@@ -28,6 +26,34 @@ module HelpFuncs
   #because normal strip doesnt work anymore oO
   def my_strip(str)
     str.gsub(/\W+$/,'').gsub(/^\W+/,'')
+  end
+
+  #create facility_id => {link, type} hash
+  def create_cache(commands)
+    $facilitycache = Hash.new   #init empty cache
+    site = $agent.click($city.link_with(:href=>/page=gebs/))  #open page
+    rows=site.search(PRODTAB_XPATH+'/tr') #get table rows
+
+    #filter out the facility id's and the links
+    rows.each{|row|
+      rowtext = tr_text(row)  #get text string from row
+      fac = rowtext.split(' ')[0]   #get facilityId of row
+
+      if fac.split(':').length == 2  #a real facility row?
+          link = row.element_children[-1].first_element_child['href'] #get the fac. url
+          #no error getting link -> add url to hash
+          if link != nil
+            #create a real url
+            link = 'http://s6.kapilands.eu/'+link
+            #get type
+            type = rowtext.split(' ')[1]
+            $facilitycache[fac] = {:link => link, :type => type}
+          end
+      end
+    }
+    #output:
+    $facilitycache.each{|key,val| puts key + "=>"+val } if $DEBUG
+    puts "Temporary factory cache created!" if $DEBUG
   end
 
   #get list of production or research facilities
@@ -78,7 +104,6 @@ end
 module Funcs
   include HelpFuncs
 
-
   #get info like bar/capital/level etc
   def info(commands)
     #extract info rows
@@ -99,7 +124,7 @@ module Funcs
     what = commands[0].to_s
 
     if (what != 'production' && what != 'research' && what != 'warehouse')
-      puts "Usage: list production/research/warehouse"
+      puts "Usage: list production|research|warehouse"
       return
     end
 
@@ -108,31 +133,7 @@ module Funcs
     list_warehouse if what=='warehouse'
   end
 
-  #create facility_id => direct link hash
-  def create_cache(commands)
-    $prodlinkcache = Hash.new   #init empty cache
-    site = $agent.click($city.link_with(:href=>/page=gebs/))  #open page
-    rows=site.search(PRODTAB_XPATH+'/tr') #get table rows
 
-    #filter out the facility id's and the links
-    rows.each{|row|
-      rowtext = tr_text(row)  #get text string from row
-      fac = rowtext.split(' ')[0]   #get facilityId of row
-
-      if fac.split(':').length == 2  #a real facility row?
-          link = row.element_children[-1].first_element_child['href'] #get the fac. url
-          #no error getting link -> add url to hash
-          if link != nil
-            #create a real url
-            link = 'http://s6.kapilands.eu/'+link
-            $prodlinkcache[fac] = link
-          end
-      end
-    }
-    #output:
-    $prodlinkcache.each{|key,val| puts key + "=>"+val } if $DEBUG
-    puts "Temporary factory cache created!"
-  end
 
   #set production for a building:
   #prod Kongo:39247345 abort
@@ -145,14 +146,14 @@ module Funcs
     number = commands[3].to_s
 
     if facilityid=="" || product =="" || product != "abort" && (way =="" || number=="" || (way != 'amount' && way != 'time'))
-      puts "usage: prod <factoryid> <product> <time>/<amount> HH[:MM]/<number>\n or: prod <factoryid> abort"
+      puts "Usage: prod <factoryid> <product> <time>|<amount> HH[:MM]|<number>\n\tor: prod <factoryid> abort"
       return false
     end
 
 
     link = nil    #url of the facility
-    #if no prodlinkcache built or facility id not in there -> go to page and get it
-    if $prodlinkcache == nil || $prodlinkcache[facilityid] == nil
+    #if no facilitycache built or facility id not in there -> go to page and get it
+    if $facilitycache == nil || $facilitycache[facilityid] == nil
       site = $agent.click($city.link_with(:href=>/page=gebs/))  #open page
       rows=site.search(PRODTAB_XPATH+'/tr') #get table rows
 
@@ -169,7 +170,7 @@ module Funcs
         end
        }
     else  #must be cached -> get from cache
-      link = $prodlinkcache[facilityid]
+      link = $facilitycache[facilityid][:link]
     end
 
     #abort production? try...
@@ -192,14 +193,14 @@ module Funcs
         puts "Production in #{facilityid} aborted!"
         return true
       else              #link not found
-        puts "Nothing to abort!"
+        puts 'Nothing to abort!'
         return false
       end
     end
 
     #check that is ready to use
     if rowtext != nil && rowtext.match(/bereit/)==nil
-        puts "Abort current production first!"
+        puts 'Abort current production first!'
         return false
     end
 
@@ -210,7 +211,7 @@ module Funcs
     cancel = prodsite.link_with(:text=>/abbrechen/)
     control = prodsite.search('//*[@id="SPAN_PRODUKTION_PRODUZIERT_FERTIGIN"]').text.match(/Fertig in/)
     if cancel!=nil && control != nil  #OMG its producing!
-       puts "Abort current production first!"
+       puts 'Abort current production first!'
        return false
     end
 
@@ -255,7 +256,7 @@ module Funcs
 
     #check whether the starting was successful
     if started.body.match('zu produzieren brauchst du') != nil
-      puts "Not enough ressources!"
+      puts 'Not enough ressources!'
       return false
     end
 
@@ -265,7 +266,7 @@ module Funcs
 
   def group(commands)
     if commands[0]==nil
-      puts "Usage: group create/delete <name> <type>\nor: group <name> abort\nor: group <name> add/remove <id>\nor: group <name> prod <product> amount/time number/HH:MM"
+      puts "Usage: group create|delete <name> <type>\nor: group <name> abort\nor: group <name> add|remove <id>\nor: group <name> prod <product> amount|time number|HH:MM"
       return false
     end
 
@@ -274,7 +275,7 @@ module Funcs
 
     #create a new group
     if cmd=='create'
-      if commands[1]==nil
+      if commands[1]==nil || commands[2]==nil
         puts "Usage: group create <name> <type>"
         return false
       end
@@ -302,7 +303,7 @@ module Funcs
 
     #list the groups which currently exist
     elsif cmd=='list'
-      $groups.keys.each{|key| puts key }
+      $groups.keys.each{|key| puts key.to_s+" (#{$groups[key].type})" }
 
     else
       #its not list and not abort and has no extra options? show usage info
@@ -317,22 +318,34 @@ module Funcs
 
       #check that the group exists
       if $groups[name.to_sym]==nil
-        puts "Group does not exist!"
+        puts 'Group does not exist!'
         return false
       end
 
       #add a facility to a group (double entries automatically removed) - can process a list of ids
       if cmd=='add' #todo: add type check
         2.upto(commands.length-1) do |i|
-          $groups[name.to_sym].add(commands[i])
-          puts "#{commands[i]} added to #{name}!"
+          if $facilitycache[commands[i]] != nil #facility does really exist
+            if $facilitycache[commands[i]][:type] == $groups[name.to_sym].type  #type matching?
+              $groups[name.to_sym].add(commands[i])
+              puts "#{commands[i]} added to #{name}!"
+            else
+              puts "#{$facilitycache[commands[i]][:type]+' '+commands[i]} can not be added to the #{$groups[name.to_sym].type} group #{name}!"
+            end
+          else
+            puts "#{commands[i]} does not exist!"
+          end
         end
 
       #remove a facility from a group - can process a list of ids
       elsif cmd=='remove'
         2.upto(commands.length-1) do |i|
-          $groups[name.to_sym].remove(commands[i])
-          puts "#{commands[i]} removed from #{name}!"
+          if $groups[name.to_sym].ids.index(commands[i]) != nil #its in the group
+            $groups[name.to_sym].remove(commands[i])
+            puts "#{commands[i]} removed from #{name}!"
+          else  #not in group
+            puts "#{commands[i]} is not in #{name}!"
+          end
         end
 
       #list the facilities of a group
@@ -370,7 +383,6 @@ module Funcs
     help += "group <name> abort\n"
     help += "group <name> prod <product> amount|time number|HH:MM\n"
     help += "prod <id> abort\nprod <id> <product> amount|time number|HH:MM\n"
-    help += "create_cache (run once after login, may speed up group prod a little)\n"
     puts help
   end
 end

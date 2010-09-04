@@ -16,24 +16,24 @@ $groups = conf.groups       #global alias (for group functions)
 
 #get nick and pass from config or if not existing, ask
 if conf.nickname==nil
-  print "Nickname:"
+  print 'Nickname: '
   nickname=gets.chomp
 else
   nickname = conf.nickname
 end
 if conf.password==nil
-  print "Password:"
+  print 'Password: '
   password=gets.chomp
 else
   password = conf.password
 end
 
-puts "Logging in..."
+puts 'Logging in...'
 
 #Init mechanize
 $agent = Mechanize.new
-$agent.user_agent = "Mechanize"
-$agent.user_agent_alias = "Linux Mozilla"
+$agent.user_agent = 'Mechanize'
+$agent.user_agent_alias = 'Linux Mozilla'
 
 #fill out form, login
 start = $agent.get('http://s6.kapilands.eu')
@@ -44,7 +44,7 @@ start = $agent.submit login_form
 
 #check login success
 if start.body.match('Logout')
-  puts "Login successful!"
+  puts 'Login successful!'
   #Login data verified -> save
   conf.nickname = nickname
   conf.password = password
@@ -55,6 +55,9 @@ end
 
 #starting point for all actions
 $city = $agent.click(start.link_with(:href => /stadtuebersicht/))
+
+#create fab cache (needed for group type checking and for faster access)
+Funcs.create_cache([])
 
 #main loop - dynamically call methods depending on issued commands
 command = ""
