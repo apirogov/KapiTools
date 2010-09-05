@@ -324,7 +324,7 @@ module Funcs
       end
 
       #get further subcommands
-      name = cmd
+      name = cmd.downcase
       cmd = commands[1]
 
       #check that the group exists
@@ -334,7 +334,7 @@ module Funcs
       end
 
       #add a facility to a group (double entries automatically removed) - can process a list of ids
-      if cmd=='add' #todo: add type check
+      if cmd=='add'
         2.upto(commands.length-1) do |i|
           if $facilitycache[commands[i].downcase] != nil #facility does really exist
             if $facilitycache[commands[i].downcase][:type].downcase == $groups[name.to_sym].type.downcase  #type matching?
@@ -436,7 +436,6 @@ module Funcs
     end
 
     puts "TODO"
-    return false
     #TODO: fix! and fillout form... do checks... sell
 
     #manually forge post request
@@ -444,24 +443,20 @@ module Funcs
     postdata = []
     #get number of rows
     num =  warehouse.search('//input[@name="p_anz[]"]').length
+    #add the amount field for each row
     0.upto(num-1) do |i|
-      #add the amount field for each row
       val = warehouse.search('//input[@name="p_anz[]"]')[i]['value']
-      if i != index
-        postdata.push ["p_anz%5B%5D", val]
-      else
-        postdata.push ["p_anz%5B%5D", amount]
-      end
+      #replace the one we want with the amount we want
+      i != index ? postdata.push(["p_anz%5B%5D", val]) : postdata.push(["p_anz%5B%5D", amount])
       #add the hidden fields
       postdata.push ["w_anz%5B%5D", warehouse.search('//input[@name="w_anz[]"]')[i]['value']]
-      postdata.push ["q_anz%5B%5D]", warehouse.search('//input[@name="q_anz[]"]')[i]['value']]
+      postdata.push ["q_anz%5B%5D", warehouse.search('//input[@name="q_anz[]"]')[i]['value']]
     end
     #add rest of data
     postdata.push ["wbet",price.gsub('.',',')]
     postdata.push ["vbet","0"]
     postdata.push ["fname",""]
 
-    puts link
     p postdata
 
     page = $agent.post('http://s6.kapilands.eu/'+link, postdata,{'Content-Type'=>'application/x-www-form-urlencoded'})
