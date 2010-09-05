@@ -3,11 +3,10 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
+#TODO: marketsell function -> make it work (post thingy doesnt work -.-)
 #TODO: maybe then something with ressource calculation?
-#TODO: Make id and type caseindependent
 
 #Contains helping functions invisible to the user
-module HelpFuncs
 
   PRODTAB_XPATH = '/html/body/table/tr[2]/td/div/div[4]/table'    #used quite often
 
@@ -80,9 +79,9 @@ module HelpFuncs
     puts textrows
   end
 
-  #get list of warehouse items
-  def list_warehouse()
-    #create "new tab" with research facilities
+  #get list of warehouse items with infos (used for list and marketsell)
+  def parse_warehouse()
+    #create "new tab" with warehouse
     warehouse = $agent.click($city.link_with(:href=>/page=lager/))
 
     #get table cells and recreate table as text
@@ -92,12 +91,16 @@ module HelpFuncs
     tablerows.each{|x|
       if x.to_s.match(/>\d+/)!=nil
         str=''
-        x.element_children.each{|y| str += strpad(y.text,20) }
+        x.element_children.each_with_index{|y,i|
+          td = y.text
+          td.gsub!('.','') if i == 0  #remove dots from amount numbers
+          str += strpad(td,20)
+        }
         rowstrings << str.strip
       end
     }
 
-    puts rowstrings
+    return rowstrings
   end
 end
 
@@ -131,7 +134,7 @@ module Funcs
 
     list_prod_or_res('prod') if what=='production'
     list_prod_or_res('res') if what=='research'
-    list_warehouse if what=='warehouse'
+    puts parse_warehouse if what=='warehouse'
   end
 
 
@@ -377,6 +380,93 @@ module Funcs
     end
   end
 
+  #sell amount of product at specified price at market
+  def marketsell(commands)
+    #check arguments
+    if commands.length < 3
+      puts "usage: marketsell <product> <quality> <amount>|all <price>\n"
+      return false
+    end
+
+    product = commands[0].to_s.downcase
+    quality = commands[1].to_s
+    amount = commands[2].to_s
+    price = commands[3].to_s.gsub(',','.')    #convert european floating point , -> .
+
+    #get user money amount to calculate whether there is enough to pay 10% fee
+    money = $city.search('/html/body/table/tr/td/table/tr/td[2]/table/tr')[1].text
+    money = my_strip(money).gsub(/^\w+: /,'').gsub('.','').gsub(',','.').to_f
+
+    #create "new tab" with warehouse
+    warehouse = $agent.click($city.link_with(:href=>/page=lager/))
+    #get table with data about warehouse to see whats there and how much...
+    iteminfo = parse_warehouse()
+    #convert to hash
+    iteminfo.map!{|row|
+      items = row.split(' ').map{|item| my_strip(item)}
+      {:amount=>items[0], :product=>items[1].downcase, :quality=>items[2], :averageprice=>items[3]}
+    }
+
+    #check whether specified item in specified quality is present in warehouse and get index
+    index = nil
+    itemfound = false
+    iteminfo.each_with_index{|row,i|
+      if row[:product]==product && row[:quality]==quality
+        itemfound = true
+        index=i
+        break
+      end
+    }
+    if !itemfound
+      puts 'You do not posess '+product+' of quality '+quality+'!'
+      return false
+    end
+
+    #specified all as amount?
+    if amount == 'all'
+      amount = iteminfo[index][:amount]
+    end
+
+    #check whether there's enough money to sell on market (10% fee)
+    expectedfee = amount.to_f * price.to_f / 10.0 #calculate market fee
+    if money < expectedfee
+      puts "You have not enough money to pay 10% fee! You need: #{expectedfee.to_s}c"
+      return false
+    end
+
+    puts "TODO"
+    return false
+    #TODO: fix! and fillout form... do checks... sell
+
+    #manually forge post request
+    link = warehouse.search('//form')[1]['action']
+    postdata = []
+    #get number of rows
+    num =  warehouse.search('//input[@name="p_anz[]"]').length
+    0.upto(num-1) do |i|
+      #add the amount field for each row
+      val = warehouse.search('//input[@name="p_anz[]"]')[i]['value']
+      if i != index
+        postdata.push ["p_anz%5B%5D", val]
+      else
+        postdata.push ["p_anz%5B%5D", amount]
+      end
+      #add the hidden fields
+      postdata.push ["w_anz%5B%5D", warehouse.search('//input[@name="w_anz[]"]')[i]['value']]
+      postdata.push ["q_anz%5B%5D]", warehouse.search('//input[@name="q_anz[]"]')[i]['value']]
+    end
+    #add rest of data
+    postdata.push ["wbet",price.gsub('.',',')]
+    postdata.push ["vbet","0"]
+    postdata.push ["fname",""]
+
+    puts link
+    p postdata
+
+    page = $agent.post('http://s6.kapilands.eu/'+link, postdata,{'Content-Type'=>'application/x-www-form-urlencoded'})
+    puts page.body
+  end
+
   #outputs help for all commands with syntax
   def help(commands)
     help=""
@@ -390,6 +480,7 @@ module Funcs
     help += "group <name> abort\n"
     help += "group <name> prod <product> amount|time number|HH:MM\n"
     help += "prod <id> abort\nprod <id> <product> amount|time number|HH:MM\n"
+    help += "marketsell <product> <quality> <amount>|all <price>\n"
     puts help
   end
 end

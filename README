@@ -4,7 +4,7 @@ Licensed under the GPL version 3 or later
 
 
 Usage:
-	run main.rb and follow the instructions...
+	run AutoKapi.rb and follow the instructions...
 	use command 'help' to get a list of valid commands
 
 Requirement:
@@ -14,7 +14,6 @@ Requirement:
 I consider this project to be finished, because it fulfills my requirements.
 Still, there is a huge potential for extension of this tool, so grab the code and make improvements
 if you like. I appreciate all pushed improvements..
-
 
 ADDITION:
 	In the folder kapichrome you find the chrome plugin which implements the most important features

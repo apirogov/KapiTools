@@ -31,7 +31,7 @@ Installation unter Windows:
 
 ============
 Erster Start:
-	Gehe in den AutoKapi Ordner und Doppelklicke auf die Datei main.rb
+	Gehe in den AutoKapi Ordner und Doppelklicke auf die Datei AutoKapi.rb
 
 	Es erscheint ein Konsolenfenster - über dieses läuft die ganze Interaktion ab.
 	Das gesamte Programm ist auf Englisch, damit user aller Sprachversionen
@@ -90,7 +90,7 @@ Praktische Anwendung:
 		Ein <type> ist der Gebäudetyp, also das in der zweiten Spalte von links
 		Zum Beispiel: Plantage, Kraftwerk, Fabrik
 
-		Ein <product> ist, wie der Name schon sagt, ein Produkt, und zwar im Singular
+		Ein <product> ist, wie der Name schon sagt, ein Produktname
 		Zum Beispiel: Stuhl, Wasser, Bett
 
 	Gruppenverwaltung:
