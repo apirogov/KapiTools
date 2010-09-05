@@ -4,10 +4,11 @@
 #Licensed under the GPL version 3 or later
 
 #TODO: marketsell function -> make it work (post thingy doesnt work -.-)
+#TODO: update Tutorial with marketsell
 #TODO: maybe then something with ressource calculation?
 
 #Contains helping functions invisible to the user
-
+module HelpFuncs
   PRODTAB_XPATH = '/html/body/table/tr[2]/td/div/div[4]/table'    #used quite often
 
   #add spaces to achieve wished size of string
