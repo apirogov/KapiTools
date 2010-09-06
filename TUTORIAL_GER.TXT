@@ -180,6 +180,28 @@ Praktische Anwendung:
 
 			Dieser Befehl ist auch der eigentliche Grund für die Existenz und der Kern von AutoKapi.
 
+		Nachdem unser Produkt fertig ist möchten wir es bestimmt auf den Markt bringen:
+				
+			Damit du für das Verkaufen nicht mehr extra Kapiland im Browser öffnen musst,
+			hat AutoKapi auch hierfür eine simple Funktion...
+			Nehmen wir an, wir wollen alles an Stahl Q4 für 170,5c verkaufen:
+				marketsell Stahl 4 all 170,5
+			fertig! Zu beachten... Immer die Qualität mit angeben! Der allgemeine Aufbau ist also:
+				marketsell <produkt> <qualität> <menge>|all <preis>
+
+		Zu welchem Preis denn verkaufen?!?
+			
+			Das findest du leicht heraus mit:
+				marketwatch <produkt>
+
+			Es gibt dir die Liste der ersten Seite auf dem Markt (nach Preis sortiert)
+
+			Interessiert dich aber das Produkt nur in einer bestimmten Qualität?
+				marketwatch <produkt im plural> <qualität>
+
+			Hiermit werden bis zu 16 Angebote in der gewählten Qualität angezeigt...
+			So kannst du deine Ware ganz gut preislich einordnen..
+
 =========
 Fazit:
 

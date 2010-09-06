@@ -3,8 +3,6 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-#TODO: marketsell function -> make it work (post thingy doesnt work -.-)
-#TODO: update Tutorial with marketsell
 #TODO: maybe then something with ressource calculation?
 
 #Contains helping functions invisible to the user
@@ -13,20 +11,22 @@ module HelpFuncs
 
   #add spaces to achieve wished size of string
   def strpad(str,num)
+    return str if (num-str.length)<0  #negative padding
+
     str+=' '*(num-str.length)
     return str
   end
 
   #Get the text of a row with spaces in between the td's
-  def tr_text(row)
-      str = ''
-      row.element_children.each{|td| str += td.text.strip + ' '}
-      return str
+  def tr_text(row,separator=' ')
+    str = ''
+    row.element_children.each{|td| str += td.text.strip + separator}
+    return str
   end
 
   #because normal strip doesnt work anymore oO
   def my_strip(str)
-    str.gsub(/\W+$/,'').gsub(/^\W+/,'')
+    return str.gsub(/\W+$/,'').gsub(/^\W+/,'')
   end
 
   #create facility_id => {link, type} hash
@@ -55,6 +55,7 @@ module HelpFuncs
     #output:
     $facilitycache.each{|key,val| puts key + "=>"+val } if $DEBUG
     puts "Temporary factory cache created!" if $DEBUG
+    return true
   end
 
   #get list of production or research facilities
@@ -77,7 +78,17 @@ module HelpFuncs
 
     #filter junk out and output
     textrows.delete_if{|row| row.split(' ')[0].match(/:/) == nil }
+
+    #prettify
+    textrows.map!{|row|
+      txt = row.split(' ')
+      text = strpad(txt[0],20)+strpad(txt[1][0...13],14)+strpad(txt[2],6)
+      text += strpad(txt[3],8)+strpad(txt[4...-1].join(' ')[0...21],22)+strpad(txt[-1],9)
+      text
+    }
+
     puts textrows
+    return true
   end
 
   #get list of warehouse items with infos (used for list and marketsell)
@@ -103,6 +114,30 @@ module HelpFuncs
 
     return rowstrings
   end
+
+  #parse a page at the market
+  def parse_marketpage(page,quality=nil)
+    rows = page.search("//div[@id='DIV_BUERO_VORDERGRUND']/table/tr/td/table//td[@class='white2']//tr/td/table/tr")
+    rows.shift #remove info line
+
+    #extract & align text data
+    rows = rows.map {|item|
+      item = tr_text(item,'TRENNER').split('TRENNER')
+      item.pop  #drop buying link
+      item.pop  #drop total price
+      item = strpad(item[0].gsub('.',''), 12) + strpad(item[1][0...30],30) + strpad(item[2],4) + strpad(item[3].gsub('.',''),10)
+      item
+    }
+
+    #remove lines not matching quality, if any given
+    if quality!=nil
+      rows.delete_if {|item|
+        item.split(' ')[-2] != quality
+      }
+    end
+
+    return rows
+  end
 end
 
 #Contains functions which are the commands for the user
@@ -121,7 +156,9 @@ module Funcs
     lines[3] = lines[3][0..lines[3].index("\n")]
     lines[-1] = lines[-1][0...lines[-1].index("(")]
     lines.map!{|l| my_strip(l) }
+
     puts lines
+    return true
   end
 
   #list production/research/warehouse
@@ -136,6 +173,7 @@ module Funcs
     list_prod_or_res('prod') if what=='production'
     list_prod_or_res('res') if what=='research'
     puts parse_warehouse if what=='warehouse'
+    return true
   end
 
 
@@ -378,13 +416,14 @@ module Funcs
         }
       end
 
+      return true
     end
   end
 
   #sell amount of product at specified price at market
   def marketsell(commands)
     #check arguments
-    if commands.length < 3
+    if commands.length != 4
       puts "usage: marketsell <product> <quality> <amount>|all <price>\n"
       return false
     end
@@ -419,7 +458,7 @@ module Funcs
       end
     }
     if !itemfound
-      puts 'You do not posess '+product+' of quality '+quality+'!'
+      puts 'You do not posess '+product+' Q'+quality+'!'
       return false
     end
 
@@ -435,32 +474,136 @@ module Funcs
       return false
     end
 
-    puts "TODO"
-    #TODO: fix! and fillout form... do checks... sell
+    #now here's a problem - the markup of the page is invalid so mechanize
+    #can't parse it correctly (the form element seems to be empty)
+    #I use a ugly workaround - save the page to a file, correct the HTML
+    #and feed it over a file:// URL back into mechanize to continue...
+    #
+    #by the way I insert the amount we want to sell into the right field,
+    #cause it doesnt work as it should over the mechanize form interface oO
+    #
+    #be careful! don't fuss with the following code... there's a high chance to break it
 
-    #manually forge post request
-    link = warehouse.search('//form')[1]['action']
-    postdata = []
-    #get number of rows
-    num =  warehouse.search('//input[@name="p_anz[]"]').length
-    #add the amount field for each row
-    0.upto(num-1) do |i|
-      val = warehouse.search('//input[@name="p_anz[]"]')[i]['value']
-      #replace the one we want with the amount we want
-      i != index ? postdata.push(["p_anz%5B%5D", val]) : postdata.push(["p_anz%5B%5D", amount])
-      #add the hidden fields
-      postdata.push ["w_anz%5B%5D", warehouse.search('//input[@name="w_anz[]"]')[i]['value']]
-      postdata.push ["q_anz%5B%5D", warehouse.search('//input[@name="q_anz[]"]')[i]['value']]
+    #get the lines of the page
+    pagestring = warehouse.body
+    pagestring = pagestring.split("\n")
+
+    #cut out form start tag + move form close tag, insert amount into right input
+    formtag = nil
+    row = nil
+    pagestring.map! {|line|
+      if row != nil   #increment row if we already found the first one
+        row += 1
+      end
+      if line.match(/<FORM.*/) != nil  #form start tag -> extract and delete (moves to a different line)
+        row = 0   #its the first row with the products -> begin counting
+        formtag = line.match("<FORM.*'><b>Anzahl").to_s[0..-10]
+        line.gsub!(formtag,'')
+      end
+      if line.match('</form></div></td></tr></table>')!=nil   #close tag gets moved
+        line.gsub!('</form></div></td></tr></table>','</div></td></tr></table></form>')
+      end
+      if row == index   #found the row of the product we want to sell -> insert amount
+        line.gsub!("name='p_anz[]' size='6' value='0'","name='p_anz[]' size='6' value='#{amount}'")
+      end
+      line
+    }
+    formtag.gsub!('main.php4','http://s6.kapilands.eu/main.php4') #make absolute url
+    #insert form start tag where it should be
+    pagestring.map! {|line|
+      if line.match('<table width=100% border=0 cellspacing=0 cellpadding=0><tr>') != nil
+        line = formtag + line
+      end
+      line
+    }
+
+    #write to temporary file
+    pagestring = pagestring.join("\n")
+    f=File.open('ware.html','w')
+    f.puts pagestring
+    f.close
+
+    #load corrected markup from file and delete file
+    path = File.expand_path(File.dirname(__FILE__))+'/ware.html' #absolute path required for file:// URL
+    warehouse = $agent.get('file://'+path)
+    File.delete('ware.html')
+
+    ######################### END OF UGLY WORKAROUND ############################
+
+    #set the price and submit the form
+    form = warehouse.forms[1]
+#    form.fields_with(:name=>'p_anz[]')[index] = amount  # * 3 because of the 2 hidden fields for each row...
+    form['wbet'] = price.gsub('.',',') #european floating sign back...
+    page = form.submit
+
+    if page.body.match('stimmen jetzt aber nicht') != nil
+      puts 'Something went wrong... sorry :('
+      return false
     end
-    #add rest of data
-    postdata.push ["wbet",price.gsub('.',',')]
-    postdata.push ["vbet","0"]
-    postdata.push ["fname",""]
 
-    p postdata
+    #confirm
+    page = page.forms[1].submit
 
-    page = $agent.post('http://s6.kapilands.eu/'+link, postdata,{'Content-Type'=>'application/x-www-form-urlencoded'})
-    puts page.body
+    #check whether it gives that message...
+    if page.body.match(/Bei der Grundstoffe/) != nil
+      puts "Your price is higher than NPC price! Can not sell!"
+      return false
+    end
+
+    #okay :)
+    puts "#{amount} of #{product} Q#{quality} sold to market!"
+    return true
+  end
+
+  #shows the market table sorted by price (and optionally filtered by quality)
+  def marketwatch(commands)
+    if commands.length < 1
+      puts "usage: marketwatch <product in plural> [optional quality]"
+      return false
+    end
+
+    product = commands[0].to_s.downcase
+    quality = commands[1].to_s
+
+    market = $agent.click($city.link_with(:href=>/page=markt/))  #open page
+    nonfood = $agent.click(market.link_with(:href=>/prod=1/))     #link to non food page
+    food = $agent.get market.link_with(:href=>/prod=1/).node['href'].gsub('&prod=1','') #link to food page
+
+    link = nonfood.link_with(:text=>Regexp.new("#{product[1..-1]}"))
+    link = food.link_with(:text=>Regexp.new("#{product[1..-1]}")) if link==nil  #if not found in nonfood stuff
+
+    if link == nil
+      puts "Product not found!"
+      return false
+    end
+
+    marketpage = $agent.click link
+
+    #click on sorting link depending on what we want...
+    if quality == ""
+      marketpage = $agent.click(marketpage.link_with(:text=>/Preis/))
+    else
+      marketpage = $agent.click(marketpage.link_with(:text=>/Quali/))
+    end
+
+    if quality == ""  #show first page sorted by price
+      puts parse_marketpage(marketpage)
+      return true
+    end
+
+    rows = []
+    while rows.length < 16
+      rows += parse_marketpage(marketpage, quality)
+      rows.flatten  #to break from inner array
+
+      nextpage = marketpage.link_with(:text=>/weiter/)
+      break unless nextpage   #if no next page nothing to do anymore
+
+      marketpage = $agent.click(nextpage) #load next page
+    end
+
+    puts rows.reverse #reverse cause price is decreasing - I want it increasing
+    return true
   end
 
   #outputs help for all commands with syntax
@@ -477,6 +620,7 @@ module Funcs
     help += "group <name> prod <product> amount|time number|HH:MM\n"
     help += "prod <id> abort\nprod <id> <product> amount|time number|HH:MM\n"
     help += "marketsell <product> <quality> <amount>|all <price>\n"
+    help += "marketwatch <product in plural> [optional quality]\n"
     puts help
   end
 end
