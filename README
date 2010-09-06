@@ -2,18 +2,28 @@ AutoKapi
 Copyright (C) 2010 Anton Pirogov
 Licensed under the GPL version 3 or later
 
+AutoKapi: 	Enables to do everyday jobs in Kapiland more easily and offering a nice CLI for Kapiland.
+KapiNotify:	Get informed when your production is ready!
 
-Usage:
-	run AutoKapi.rb and follow the instructions...
-	use command 'help' to get a list of valid commands
+Usage of AutoKapi tools:
+
+	run AutoKapi.rb, enter your login data and issue commands...
+		use command 'help' to get a list of valid commands
+		German users: check out TUTORIAL_GER.TXT!
+
+	run KapiNotify.rb - it will run in the background and show messages if something interesting happens!
+		(NOTE: you must have already entered your login data into AutoKapi for KapiNotify to work properly!)
+
 
 Requirement:
 	ruby gem 'mechanize'
 
 
-I consider this project to be finished, because it fulfills my requirements.
-Still, there is a huge potential for extension of this tool, so grab the code and make improvements
-if you like. I appreciate all pushed improvements..
+I regard this project as finished, because it fulfills my requirements. Still, there is a huge
+potential for extension of this tool, so grab the code and make improvements if you like.
+
+I appreciate all pushed improvements..
+
 
 ADDITION:
 	In the folder kapichrome you find the chrome plugin which implements the most important features

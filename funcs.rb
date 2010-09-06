@@ -3,8 +3,6 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-#TODO: maybe then something with ressource calculation?
-
 #Contains helping functions invisible to the user
 module HelpFuncs
   PRODTAB_XPATH = '/html/body/table/tr[2]/td/div/div[4]/table'    #used quite often
@@ -87,8 +85,7 @@ module HelpFuncs
       text
     }
 
-    puts textrows
-    return true
+    return textrows
   end
 
   #get list of warehouse items with infos (used for list and marketsell)
@@ -170,8 +167,8 @@ module Funcs
       return
     end
 
-    list_prod_or_res('prod') if what=='production'
-    list_prod_or_res('res') if what=='research'
+    puts list_prod_or_res('prod') if what=='production'
+    puts list_prod_or_res('res') if what=='research'
     puts parse_warehouse if what=='warehouse'
     return true
   end
