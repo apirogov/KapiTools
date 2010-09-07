@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-#AutoKapi
+#KapiTools configuration loading/saving
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 

@@ -90,7 +90,7 @@ while true                #endless loop checking for updates
   }
   notify(msg) if msg != ''  #we have changes -> show the message
 
-  sleep 10          #checking every 10 seconds
+  sleep 60          #checking every minute
   state = newstate  #replace old with new, start over
 end
 

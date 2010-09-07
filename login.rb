@@ -1,5 +1,5 @@
 #!/usr/bin/env/ruby
-#Login functions (used by autokapi and autobuy independently)
+#Login functions (used by different KapiTools independently)
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPLv3 or later
 

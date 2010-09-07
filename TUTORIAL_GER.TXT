@@ -1,4 +1,4 @@
-====     AutoKapi     ====
+====     KapiTools    ====
 ====Deutsches Tutorial====
 
 ================
@@ -8,7 +8,7 @@ Voraussetzungen:
 
 ===========================
 Installation unter Windows:
-	AutoKapi benötigt die Laufzeitumgebung der Programmiersprache Ruby. Diese erhälst du unter
+	KapiTools benötigt die Laufzeitumgebung der Programmiersprache Ruby. Diese erhälst du unter
 	folgendem Link:
 		http://files.rubyforge.vm.bytemark.co.uk/rubyinstaller/rubyinstaller-1.9.2-p0.exe
 
@@ -27,11 +27,11 @@ Installation unter Windows:
 		C:\Dokumente und Einstellungen\DeinUser>
 	sehen kannst.
 
-	Nun ist alles für den Einsatz von AutoKapi bereit!
+	Nun ist alles für den Einsatz von KapiTools bereit!
 
 ============
 Erster Start:
-	Gehe in den AutoKapi Ordner und Doppelklicke auf die Datei AutoKapi.rb
+	Gehe in den KapiTools Ordner und Doppelklicke auf die Datei KapiManager.rb
 
 	Es erscheint ein Konsolenfenster - über dieses läuft die ganze Interaktion ab.
 	Das gesamte Programm ist auf Englisch, damit user aller Sprachversionen
@@ -48,20 +48,20 @@ Erster Start:
 		>>
 
 
-	Dieses >> zeigt dir an, dass du nun AutoKapi Befehle ausführen kannst.
+	Dieses >> zeigt dir an, dass du nun KapiManager Befehle ausführen kannst.
 	Du kannst sofort ausprobieren, benutze den Befehl:
 		logout
 	und drück Enter!
 
-	AutoKapi hat sich nun geschlossen und deine Login Daten gespeichert, 
+	KapiManager hat sich nun geschlossen und deine Login Daten gespeichert, 
 	sodass du beim nächsten Start nicht mehr gefragt wirst.
 
-	WICHTIG: Verlasse AutoKapi IMMER über logout!
+	WICHTIG: Verlasse KapiManager IMMER über logout!
 	Sonst werden deine Änderungen an deinen Gruppen nicht gespeichert!
 
 =================
 Einfache Befehle:
-	Starte AutoKapi erneut. Nun wurdest du schon automatisch eingeloggt und siehst das >>
+	Starte KapiManager erneut. Nun wurdest du schon automatisch eingeloggt und siehst das >>
 
 	Mit dem Befehl
 		help
@@ -102,7 +102,7 @@ Praktische Anwendung:
 
 		Was ist geschehen? Wir haben eine neue Gruppe mit dem Namen kws angelegt,
 		die nur Kraftwerke aufnehmen kann. Das heißt, versuchst du in diese Gruppe
-		eine Fabrik hinzuzufügen (was keinen Sinn macht), lässt AutoKapi das nicht zu.
+		eine Fabrik hinzuzufügen (was keinen Sinn macht), lässt KapiManager das nicht zu.
 
 		Nun fügen wir die Kraftwerke zu der Gruppe hinzu. Dazu brauchst du die IDs der Kraftwerke.
 		Nehmen wir an, die Kraftwerke sind: Kongo:123456, Kongo:234567 und Kongo:345678 -
@@ -130,7 +130,7 @@ Praktische Anwendung:
 			group delete <name>
 		Wobei <name> für den Gruppennamen, zB kws steht.
 
-		WICHTIG: Ich erwähne es nochmal - verlasse AutoKapi IMMER mit logout!
+		WICHTIG: Ich erwähne es nochmal - verlasse KapiManager IMMER mit logout!
 				Sonst werden alle Änderungen an den Gruppen verworfen!
 
 	Der Spaß beginnt - Einzelproduktion und Gruppenproduktion:
@@ -153,7 +153,7 @@ Praktische Anwendung:
 				Also sehen wir: Ist eine Produktion nach Zeit erwünscht, muss am ende
 					time hh[:mm] stehen, also eine einfache zahl gilt als Stunden,
 					aber eine Angabe in der Form wie 12:34 gilt als 12 Stunden 34 Minuten.
-					AutoKapi rechnet die absolute Anzahl, die in der Zeit zu produzieren ist selbst aus.
+					KapiManager rechnet die absolute Anzahl, die in der Zeit zu produzieren ist selbst aus.
 
 				Es gibt 3 häufigste Gründe, warum das Starten der Produktion misslingt:
 					- Es läuft bereits ein Auftrag
@@ -178,12 +178,12 @@ Praktische Anwendung:
 
 			Ich hoffe dieser Zusammenhang ist nachvollziehbar.
 
-			Dieser Befehl ist auch der eigentliche Grund für die Existenz und der Kern von AutoKapi.
+			Dieser Befehl ist auch der eigentliche Grund für die Existenz und der Kern von KapiManager.
 
 		Nachdem unser Produkt fertig ist möchten wir es bestimmt auf den Markt bringen:
 				
 			Damit du für das Verkaufen nicht mehr extra Kapiland im Browser öffnen musst,
-			hat AutoKapi auch hierfür eine simple Funktion...
+			hat KapiManager auch hierfür eine simple Funktion...
 			Nehmen wir an, wir wollen alles an Stahl Q4 für 170,5c verkaufen:
 				marketsell Stahl 4 all 170,5
 			fertig! Zu beachten... Immer die Qualität mit angeben! Der allgemeine Aufbau ist also:
@@ -205,7 +205,7 @@ Praktische Anwendung:
 =========
 Fazit:
 
-	Mit AutoKapi kann man eine Menge Zeit sparen, falls man dutzende gleiche Gebäude besitzt.
-	Dabei versucht AutoKapi auch Bedienungsfehler abzufangen, damit man nicht viel falsch machen kann.
-	Ich hoffe durch dieses Tutorial ist die AutoKapi-Bedienung klar geworden und wünsche viel Spaß!
+	Mit KapiManager kann man eine Menge Zeit sparen, falls man dutzende gleiche Gebäude besitzt.
+	Dabei versucht KapiManager auch Bedienungsfehler abzufangen, damit man nicht viel falsch machen kann.
+	Ich hoffe durch dieses Tutorial ist die KapiManager-Bedienung klar geworden und wünsche viel Spaß!
 
