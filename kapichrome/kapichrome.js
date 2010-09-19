@@ -58,7 +58,9 @@ if (gup("page")=="lager") {
 	rechnung.setAttribute("id","rechnung");
 	rechnung.setAttribute("style","text-align: center;");
 	document.getElementById("DIV_WARE_VERSENDEN").insertBefore(rechnung,document.getElementById("DIV_WARE_VERSENDEN").childNodes[2]);
+	/* noch zu implementieren
 	document.getElementsByName("wbet")[0].setAttribute("onkeyup","javascript:document.getElementById('rechnung').innerHTML='test';");
+	*/
 
 	// ALLES knöpfe hinzufügen
 	var tablerows = document.getElementById("TABLE_MY_PRODUCTS_IN_STOCK").firstChild.childNodes;
