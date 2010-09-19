@@ -5,7 +5,7 @@
 
 require 'rubygems'  if RUBY_VERSION < "1.9"
 require 'mechanize'
-require './config.rb'
+require_relative 'config'
 
 #init mechanize, login and return city page (starting point for everything)
 #defines global $conf, $agent, $groups and $city

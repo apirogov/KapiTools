@@ -4,9 +4,8 @@
 #Licensed under the GPLv3 or later
 
 require 'tk'  #for message box
-
-require './login.rb'
-require './funcs.rb'
+require_relative 'login'
+require_relative 'funcs'
 include HelpFuncs
 
 #show a message box with given text

@@ -3,8 +3,8 @@
 #Copyright (C) 2010 Anton Pirogov
 #Licensed under the GPL version 3 or later
 
-require './login.rb'  #mechanize and login stuff
-require './funcs.rb'  #functions for autokapi
+require_relative 'login'  #mechanize and login stuff
+require_relative 'funcs'  #functions for autokapi
 include Funcs
 
 #Login
