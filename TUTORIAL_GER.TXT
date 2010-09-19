@@ -149,11 +149,16 @@ Praktische Anwendung:
 					prod Mauretanien:987654 strom time 48
 				Wir wollen die Fabrik Deutschland:666777 1337 Einheiten Stahl produzieren lassen:
 					prod Deutschland:666777 stahl amount 1337
+				Wir wollen die Fabrik bis zum 23.02.2011 um 17:11 produzieren lassen:
+					prod Deutschland:666777 stahl until 2011-02-23T17:11
 
 				Also sehen wir: Ist eine Produktion nach Zeit erwünscht, muss am ende
 					time hh[:mm] stehen, also eine einfache zahl gilt als Stunden,
 					aber eine Angabe in der Form wie 12:34 gilt als 12 Stunden 34 Minuten.
 					KapiManager rechnet die absolute Anzahl, die in der Zeit zu produzieren ist selbst aus.
+
+					Will man bis zu einem Datum produzieren, ist ein Datum im Format
+					<4stellig Jahr>-<monat>-<tag>T<stunden>:<minuten> anzugeben.
 
 				Es gibt 3 häufigste Gründe, warum das Starten der Produktion misslingt:
 					- Es läuft bereits ein Auftrag

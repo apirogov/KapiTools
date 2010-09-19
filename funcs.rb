@@ -185,8 +185,8 @@ module Funcs
     way = commands[2].to_s
     number = commands[3].to_s
 
-    if facilityid=="" || product =="" || product != "abort" && (way =="" || number=="" || (way != 'amount' && way != 'time'))
-      puts "Usage: prod <factoryid> <product> <time>|<amount> HH[:MM]|<number>\n\tor: prod <factoryid> abort"
+    if facilityid=="" || product =="" || product != "abort" && (way =="" || number=="" || (way != 'amount' && way != 'time' && way != 'until'))
+      puts "Usage: prod <factoryid> <product> time|amount|until HH[:MM]|<number>|<date>\n\tor: prod <factoryid> abort"
       return false
     end
 
@@ -286,13 +286,26 @@ module Funcs
 
     #get form element for textfields + button
     form = prodsite.forms[1]
+
     #calculate absolute amount from time
     if way=='time'
       #get the stuff out from the script segment (mechanize cant eval js -.-)
       datastring = prodinfos[index].inner_text.split('</div>')[1]
       perhour = datastring.split('pro Std.')[0].split(' ')[-1].to_f
+
       #calculate amount using number per hour
       number = (perhour*number.split(':')[0].to_i + perhour/60*number.split(':')[1].to_i).round.to_s
+
+    elsif way=='until'
+      #get the stuff out from the script segment (mechanize cant eval js -.-)
+      datastring = prodinfos[index].inner_text.split('</div>')[1]
+      perhour = datastring.split('pro Std.')[0].split(' ')[-1].to_f
+
+      #calculate time from now until the date and calculate amount...
+      require 'time'
+      datediff = Time.parse(number) - Time.now  #in seconds
+      datediff = datediff.to_i / 60.0 / 60.0  #get hours as fraction
+      number = (perhour * datediff).round.to_s
     end
 
     #set amount in the right textbox
