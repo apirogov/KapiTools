@@ -186,7 +186,7 @@ module Funcs
     number = commands[3].to_s
 
     if facilityid=="" || product =="" || product != "abort" && (way =="" || number=="" || (way != 'amount' && way != 'time' && way != 'until'))
-      puts "Usage: prod <factoryid> <product> time|amount|until HH[:MM]|<number>|<date>\n\tor: prod <factoryid> abort"
+      puts "Usage: prod <factoryid> <product> time|amount|until <HH[:MM]|number|date>\n\tor: prod <factoryid> abort"
       return false
     end
 
@@ -325,7 +325,7 @@ module Funcs
 
   def group(commands)
     if commands[0]==nil
-      puts "Usage: group create|delete <name> <type>\nor: group <name> abort\nor: group <name> add|remove <id>\nor: group <name> prod <product> amount|time number|HH:MM"
+      puts "Usage: group create <name> <type>\ngroup delete <name>\ngroup list\ngroup <name> list\ngroup <name> abort\ngroup <name> add|remove <id>\ngroup <name> prod <product> amount|time|until <number|HH[:MM]|date>"
       return false
     end
 
@@ -542,7 +542,6 @@ module Funcs
 
     #set the price and submit the form
     form = warehouse.forms[1]
-#    form.fields_with(:name=>'p_anz[]')[index] = amount  # * 3 because of the 2 hidden fields for each row...
     form['wbet'] = price.gsub('.',',') #european floating sign back...
     page = form.submit
 
@@ -627,8 +626,8 @@ module Funcs
     help += "group <name> add|remove <id> [<id>, <id>, ...]\n"
     help += "group <name> list\n"
     help += "group <name> abort\n"
-    help += "group <name> prod <product> amount|time number|HH:MM\n"
-    help += "prod <id> abort\nprod <id> <product> amount|time number|HH:MM\n"
+    help += "group <name> prod <product> amount|time|until number|HH<:MM>|date\n"
+    help += "prod <id> abort\nprod <id> <product> amount|time|until <number|HH[:MM]|date>\n"
     help += "marketsell <product> <quality> <amount>|all <price>\n"
     help += "marketwatch <product in plural> [optional quality]\n"
     puts help
