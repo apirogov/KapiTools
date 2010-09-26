@@ -29,12 +29,12 @@ end
 #script gets killed -> shutdown, remove lock
 trap("INT") {
   puts "KapiNotify shutting down..."
-  logout()  #clean logout from kapiland (just to make sure)
+  Login.logout()  #clean logout from kapiland (just to make sure)
   File.delete(tmp_file) #remove lock file
   exit
 }
 
-init_and_login()  #init mechanize, login to kapiland
+Login.init_and_login()  #init mechanize, login to kapiland
 
 puts "KapiNotify started!"
 

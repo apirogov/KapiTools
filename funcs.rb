@@ -56,6 +56,21 @@ module HelpFuncs
     return true
   end
 
+  #input - mechanize site object, output - hash {product-name => its index}
+  def get_valid_products(fac)
+    #facility id given? load page... (mainly for usage in completion routine)
+    fac = $agent.get($facilitycache[fac.downcase][:link]) if fac.class.to_s == "String"
+
+    proditems = fac.search('/html/body/table/tr[2]/td/div/table/tr/td')
+    indexhash = Hash.new
+    i=0
+    proditems.each {|elem|
+      indexhash[elem.first_element_child.first_element_child['src'].split('/')[-1].split('.')[0].downcase.to_sym] = i
+      i+=1
+    }
+    return indexhash
+  end
+
   #get list of production or research facilities
   def list_prod_or_res(type)
     #create "new tab" with production/research facilities
@@ -140,6 +155,12 @@ end
 #Contains functions which are the commands for the user
 module Funcs
   include HelpFuncs
+
+  #exit KapiManager
+  def logout(commands)
+    Login.logout();
+    exit
+  end
 
   #get info like bar/capital/level etc
   def info(commands)
@@ -261,21 +282,9 @@ module Funcs
        return false
     end
 
-    #create product name -> link index hash and index -> intern index array
-    proditems = prodsite.search('/html/body/table/tr[2]/td/div/table/tr/td')
-    prodinfos = prodsite.search('/html/body/table/tr[2]/td/div/table/tr/script')
-    indexhash = Hash.new
-    itoreali = Array.new
-    i=0
-    proditems.each {|elem|
-      indexhash[elem.first_element_child.first_element_child['src'].split('/')[-1].split('.')[0].downcase.to_sym] = i
-      i+=1
-    }
-    proditems.each {|elem|
-      itoreali.push elem.first_element_child['onclick'].split(' ')[-1].split(')')[0].to_i
-    }
+    prodinfos = prodsite.search('/html/body/table/tr[2]/td/div/table/tr/script')  #for amount per hour etc.
 
-    index = indexhash[product.downcase.to_sym]    #save index of chosen product
+    index = get_valid_products(prodsite)[product.downcase.to_sym] #save index of chosen product
 
     if index == nil
       puts "You can't produce #{product} here!" #invalid prod for facility -> fail
@@ -630,6 +639,7 @@ module Funcs
     help += "prod <id> abort\nprod <id> <product> amount|time|until <number|HH[:MM]|date>\n"
     help += "marketsell <product> <quality> <amount>|all <price>\n"
     help += "marketwatch <product in plural> [optional quality]\n"
+    help += "logout\n"
     puts help
   end
 end

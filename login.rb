@@ -7,9 +7,10 @@ require 'rubygems'  if RUBY_VERSION < "1.9"
 require 'mechanize'
 require_relative 'config'
 
+module Login
 #init mechanize, login and return city page (starting point for everything)
 #defines global $conf, $agent, $groups and $city
-def init_and_login
+def Login.init_and_login
   $conf = Configuration.new    #try to load a config... or create a blank one
   $groups = $conf.groups       #global alias (for group functions)
 
@@ -57,10 +58,11 @@ def init_and_login
 end
 
 #properly logout from kapiland
-def logout
+def Login.logout
   #save config & logout
   puts "Logout..."
   $conf.save
   $agent.click($city.link_with(:text => /.*Logout.*/))
 end
 
+end
