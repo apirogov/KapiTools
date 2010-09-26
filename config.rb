@@ -5,17 +5,22 @@
 
 require 'base64'
 
+#get absolute directory of current script
+def progdir
+  File.expand_path(File.dirname(__FILE__))
+end
+
 class Configuration
   attr_accessor :nickname,:password,:groups
 
   #save configuration to 2 files - nick+pwd into autokapi.config
   # & all the groups as marshal to autokapi.groups
   def save
-    f=File.open('autokapi.config','w')
+    f=File.open(progdir+'/autokapi.config','w')
     f.puts "nickname="+@nickname
     f.puts "password="+@password
     f.close
-    File.open('autokapi.groups','w') do |f|
+    File.open(progdir+'/autokapi.groups','w') do |f|
       Marshal.dump(@groups,f)
     end
   end
@@ -25,8 +30,8 @@ class Configuration
   def initialize
     puts 'Loading configuration files...' if $DEBUG
 
-    if File.exists?('autokapi.config')
-      f = File.open('autokapi.config','r')
+    if File.exists?(progdir+'/autokapi.config')
+      f = File.open(progdir+'/autokapi.config','r')
       strings = f.readlines
       f.close
 
@@ -39,8 +44,8 @@ class Configuration
     else
       puts 'No configuration file found!' if $DEBUG
     end
-    if File.exists?('autokapi.groups')
-      f = File.open('autokapi.groups','r') do |f|
+    if File.exists?(progdir+'/autokapi.groups')
+      f = File.open(progdir+'/autokapi.groups','r') do |f|
         @groups = Marshal.load(f)
       end
     else
