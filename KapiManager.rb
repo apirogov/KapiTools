@@ -17,7 +17,11 @@ Funcs.create_cache([])
 
 #helper func for completion - filter out the possible candidates
 def mk_comp_candidates(array,input)
-  array.select{|x| x.match(Regexp.new("^"+input[-1]+".*"))!=nil}
+  arr = array.select{|x| x.match(Regexp.new("^"+input[-1]+".*"))!=nil}
+  if RUBY_PLATFORM.match(/(win|w)32$/) != nil #windows -> no line buffer -> must work on whole line
+    arr.map!{|x| (input[0...-1].join(' ')+' '+x).strip}
+  end
+  return arr
 end
 
 #helper function - dates candidates
@@ -29,9 +33,13 @@ end
 
 #routine for completion... marketsell & marketwatch context completion not implemented
 complete = lambda { |input|
+  if RUBY_PLATFORM.match(/(win|w)32$/) == nil #not windows -> use line_buffer
+    input = Readline.line_buffer
+  end
+
   addempty = false    #adds empty "token" for a new unfinished command...
-  addempty = true if Readline.line_buffer[-1]==' '
-  input = Readline.line_buffer.strip.downcase.split(' ')
+  addempty = true if input[-1]==' '
+  input = input.strip.downcase.split(' ')
   input = [''] if input == []   #to fix a nilClass error
   input << '' if addempty
 
@@ -92,6 +100,8 @@ complete = lambda { |input|
 if RUBY_PLATFORM.match(/(win|w)32$/) == nil #not windows
   stty_save = `stty -g`.chomp
   trap('INT') { puts ""; Login.logout(); system('stty', stty_save); exit }
+else
+  Readline.completer_word_break_characters=""   #cause line_buffer doesn't work on windows...
 end
 
 Readline.completion_proc = complete           #add simple completion
