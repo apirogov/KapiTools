@@ -15,9 +15,9 @@ Login.init_and_login()
 #create fab cache (needed for group type checking and for faster access)
 Funcs.create_cache([])
 
-#helper func for completion - filter out and prepare
+#helper func for completion - filter out the possible candidates
 def mk_comp_candidates(array,input)
-  array.select{|x| x.match(Regexp.new("^"+input[-1]+".*"))!=nil}.map{|x| (input[0...-1].join(' ')+' '+x).strip}
+  array.select{|x| x.match(Regexp.new("^"+input[-1]+".*"))!=nil}
 end
 
 #helper function - dates candidates
@@ -30,8 +30,8 @@ end
 #routine for completion... marketsell & marketwatch context completion not implemented
 complete = lambda { |input|
   addempty = false    #adds empty "token" for a new unfinished command...
-  addempty = true if input[-1]==' '
-  input = input.strip.split(' ')
+  addempty = true if Readline.line_buffer[-1]==' '
+  input = Readline.line_buffer.strip.downcase.split(' ')
   input = [''] if input == []   #to fix a nilClass error
   input << '' if addempty
 
@@ -88,12 +88,12 @@ complete = lambda { |input|
   return comp
 }
 
-#catch ^C interrupt
-stty_save = `stty -g`.chomp
-trap('INT') { puts ""; Login.logout(); system('stty', stty_save); exit }
+#catch ^C interrupt on unixoid systems
+if RUBY_PLATFORM.match(/(win|w)32$/) == nil #not windows
+  stty_save = `stty -g`.chomp
+  trap('INT') { puts ""; Login.logout(); system('stty', stty_save); exit }
+end
 
-Readline.completion_case_fold = true          #ignore case for completion
-Readline.completer_word_break_characters = "" #make completion line wide... for context sensitivity
 Readline.completion_proc = complete           #add simple completion
 
 #main loop - dynamically call methods depending on issued commands
