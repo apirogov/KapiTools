@@ -59,7 +59,11 @@ module HelpFuncs
   #input - mechanize site object, output - hash {product-name => its index}
   def get_valid_products(fac)
     #facility id given? load page... (mainly for usage in completion routine)
-    fac = $agent.get($facilitycache[fac.downcase][:link]) if fac.class.to_s == "String"
+    if fac.class.to_s == "String" && $facilitycache[fac.downcase] != nil
+      fac = $agent.get($facilitycache[fac.downcase][:link])
+    elsif $facilitycache[fac.downcase] == nil
+      return Hash.new #no such facility
+    end
 
     proditems = fac.search('/html/body/table/tr[2]/td/div/table/tr/td')
     indexhash = Hash.new

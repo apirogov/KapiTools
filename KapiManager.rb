@@ -65,7 +65,9 @@ complete = lambda { |input|
     elsif input.length >= 4 && input[2] == 'add'
       comp = mk_comp_candidates($facilitycache.keys.map{|x| x.to_s}-$groups[input[1].to_sym].ids - input[3..-2], input)
     elsif input.length == 4 && input[2] == 'prod'
-      comp = mk_comp_candidates(HelpFuncs.get_valid_products($groups[input[1].to_sym].ids[0]).keys.map{|x| x.to_s}, input)
+      if $groups[input[1].to_sym] != nil && $groups[input[1].to_sym].ids.length > 0
+        comp = mk_comp_candidates(HelpFuncs.get_valid_products($groups[input[1].to_sym].ids[0]).keys.map{|x| x.to_s}, input)
+      end
     elsif input.length == 5 && input[2] == 'prod'
       comp = mk_comp_candidates(['until','time','amount'], input)
     elsif input.length == 6 && input[4] == 'until'
